@@ -1,74 +1,106 @@
 from fastapi import APIRouter, HTTPException
-from app.supabase_client import supabase
 from app.schemas import RegisterRequest, LoginRequest
+from app.db import get_cursor
 
 router = APIRouter()
 
 
 @router.post("/register")
 def register(payload: RegisterRequest):
-    existing = (
-        supabase.table("profiles")
-        .select("*")
-        .eq("email", payload.email)
-        .execute()
-    )
+    try:
+        with get_cursor(commit=True) as cur:
+            cur.execute(
+                "SELECT id FROM profiles WHERE email = %s",
+                (payload.email,)
+            )
+            existing = cur.fetchone()
 
-    if existing.data:
-        raise HTTPException(status_code=400, detail="Email already registered")
+            if existing:
+                raise HTTPException(status_code=400, detail="Email already registered")
 
-    user_data = payload.model_dump()
-    result = supabase.table("profiles").insert(user_data).execute()
+            cur.execute(
+                """
+                INSERT INTO profiles (full_name, email, password, city, role)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING id, full_name, email, city, role, rating_average, created_at
+                """,
+                (
+                    payload.full_name,
+                    payload.email,
+                    payload.password,
+                    payload.city,
+                    payload.role,
+                )
+            )
 
-    if not result.data:
-        raise HTTPException(status_code=500, detail="Could not create user")
+            user = cur.fetchone()
 
-    user = result.data[0]
-    user.pop("password", None)
+        return {
+            "message": "User registered successfully",
+            "user": user,
+            "token": str(user["id"])
+        }
 
-    return {
-        "message": "User registered successfully",
-        "user": user,
-        "token": user["id"]
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("REGISTER ERROR:", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/login")
 def login(payload: LoginRequest):
-    result = (
-        supabase.table("profiles")
-        .select("*")
-        .eq("email", payload.email)
-        .eq("password", payload.password)
-        .execute()
-    )
+    try:
+        with get_cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, full_name, email, city, role, rating_average, created_at
+                FROM profiles
+                WHERE email = %s AND password = %s
+                """,
+                (payload.email, payload.password)
+            )
 
-    if not result.data:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+            user = cur.fetchone()
 
-    user = result.data[0]
-    user.pop("password", None)
+            if not user:
+                raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    return {
-        "message": "Login successful",
-        "user": user,
-        "token": user["id"]
-    }
+        return {
+            "message": "Login successful",
+            "user": user,
+            "token": str(user["id"])
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("LOGIN ERROR:", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/me/{user_id}")
 def get_me(user_id: str):
-    result = (
-        supabase.table("profiles")
-        .select("*")
-        .eq("id", user_id)
-        .execute()
-    )
+    try:
+        with get_cursor() as cur:
+            cur.execute(
+                """
+                SELECT id, full_name, email, city, role, rating_average, created_at
+                FROM profiles
+                WHERE id = %s
+                """,
+                (user_id,)
+            )
 
-    if not result.data:
-        raise HTTPException(status_code=404, detail="User not found")
+            user = cur.fetchone()
 
-    user = result.data[0]
-    user.pop("password", None)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
 
-    return user
+        return user
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print("GET ME ERROR:", e)
+        raise HTTPException(status_code=500, detail=str(e))
