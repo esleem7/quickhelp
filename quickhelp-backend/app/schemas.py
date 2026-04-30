@@ -30,3 +30,32 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+
+class OfferCreate(BaseModel):
+    request_id: str
+    helper_id: str
+    message: Optional[str] = None
+    proposed_reward: Optional[float] = None
+
+
+class MessageCreate(BaseModel):
+    request_id: Optional[str] = None
+    sender_id: str
+    receiver_id: str
+    content: str
+
+
+class RatingCreate(BaseModel):
+    request_id: str
+    reviewer_id: str
+    reviewed_id: str
+    rating: int
+    comment: Optional[str] = None
+
+
+class PaymentCreate(BaseModel):
+    request_id: str
+    payer_id: str
+    receiver_id: str
+    amount: float
+    method: Optional[str] = "cash"

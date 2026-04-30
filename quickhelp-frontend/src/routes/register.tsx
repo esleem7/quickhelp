@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { LifeBuoy, HandHeart, HeartHandshake, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { api, setAuth } from "@/lib/api";
 
 export const Route = createFileRoute("/register")({
@@ -131,11 +131,10 @@ function RegisterPage() {
                     <label
                       key={r.value}
                       htmlFor={`r-${r.value}`}
-                      className={`flex flex-col items-center gap-1 p-3 rounded-xl border cursor-pointer transition ${
-                        active
+                      className={`flex flex-col items-center gap-1 p-3 rounded-xl border cursor-pointer transition ${active
                           ? "border-primary bg-primary-soft text-accent-foreground"
                           : "border-border hover:bg-muted"
-                      }`}
+                        }`}
                     >
                       <RadioGroupItem id={`r-${r.value}`} value={r.value} className="sr-only" />
                       <Icon className="h-4 w-4" />

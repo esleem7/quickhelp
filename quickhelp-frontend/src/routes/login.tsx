@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { LifeBuoy, ShieldCheck, Star, Users } from "lucide-react";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { api, setAuth } from "@/lib/api";
 
 export const Route = createFileRoute("/login")({

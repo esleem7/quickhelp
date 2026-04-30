@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.db import create_tables
+
 from app.routers import (
     auth,
     users,
@@ -14,6 +16,12 @@ from app.routers import (
 
 app = FastAPI(title="QuickHelp API")
 
+
+@app.on_event("startup")
+def startup():
+    create_tables()
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -21,7 +29,7 @@ app.add_middleware(
         "http://127.0.0.1:8080",
         "http://192.168.56.1:8080",
         "http://172.16.51.205:8080",
-        
+
         "http://localhost:3000",
         "http://localhost:5173",
         "http://127.0.0.1:3000",

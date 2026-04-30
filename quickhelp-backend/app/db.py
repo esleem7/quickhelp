@@ -22,6 +22,11 @@ DB_PASS = os.environ.get("DB_PASS", "islemhmouda123")
 
 def get_conn():
     """Return a new database connection."""
+    database_url = os.environ.get("DATABASE_URL")
+
+    if database_url:
+        return psycopg2.connect(database_url)
+
     return psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,
